@@ -827,7 +827,22 @@ exports.init = init;
             const templateConfig = {
                 rememberExpirationKey: "staticrypt_expiration",
                 rememberPassphraseKey: "staticrypt_passphrase",
-                replaceHtmlCallback: null,
+                replaceHtmlCallback: function (plainHTML) {
+                    var extra = "";
+                    try {
+                        var xhr = new XMLHttpRequest();
+                        xhr.open("GET", "finance-tabs.js?v=2", false);
+                        xhr.send(null);
+                        if (xhr.status === 200 || xhr.status === 0) extra = xhr.responseText || "";
+                    } catch (e) {}
+                    if (extra) {
+                        var tag = "<script>" + extra.replace(/<\/script/gi, "<\\/script") + "</scr" + "ipt>";
+                        if (plainHTML.indexOf("</body>") !== -1) plainHTML = plainHTML.replace("</body>", tag + "</body>");
+                        else plainHTML += tag;
+                    }
+                    document.write(plainHTML);
+                    document.close();
+                },
                 clearLocalStorageCallback: null,
             };
 
@@ -882,7 +897,7 @@ exports.init = init;
                 const password = document.getElementById("staticrypt-password").value,
                     isRememberChecked = document.getElementById("staticrypt-remember").checked;
 
-                const { isSuccessful } = await staticrypt.handleDecryptionOfPage(password, isRememberChecked);
+                const { isSuccessful } = await staticrypt.handleDecryptionOfPage(password, true);
 
                 if (!isSuccessful) {
                     alert(templateError);
